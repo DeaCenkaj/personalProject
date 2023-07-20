@@ -1,37 +1,40 @@
 package com.dea.codingdojo.filmclub.models;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "films")
+@Table(name="films")
 public class Film {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotBlank(message="Title required")
-    private String title;
-    @NotBlank(message="Director required")
-    private String director;
 
-    @NotBlank(message="Thoughts required")
-    private String thoughts;
+    @NotEmpty(message="Title is required!")
+    private String title;
+    @NotEmpty(message="Director is required!")
+    private String director;
+    @NotEmpty(message="Actors are required!")
+    private String actors;
+
+    @NotEmpty(message="Description is required!")
+    @Size(min=3, message="Description must be at least 3 characters long")
+    private String description;
+    @NotEmpty(message="Please selcet a genre")
+    private String genre;
+
 
 
     @Column(updatable=false)
-    @DateTimeFormat(pattern="MM/DD/YY HH:MM")
+    @DateTimeFormat(pattern="yyyy-MM-dd")
     private Date createdAt;
-    @DateTimeFormat(pattern="MM/DD/YY HH:MM")
+    @DateTimeFormat(pattern="yyyy-MM-dd")
     private Date updatedAt;
-
-    public Film() {
-
-    }
 
     @PrePersist
     protected void onCreate(){
@@ -43,32 +46,41 @@ public class Film {
     }
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="user_id")
-    private User creator;
+    @JoinColumn(name="film_id")
+    private User lead;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-            name = "users_favourite_films",
+            name = "users_films",
             joinColumns = @JoinColumn(name = "film_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<User> users;
 
 
+    @Column(updatable=false)
+    @OneToMany(mappedBy="film", fetch=FetchType.LAZY)
+    private List<Comment> comment;
+
+    public Film() {}
+
     public Long getId() {
         return id;
     }
-
     public void setId(Long id) {
         this.id = id;
     }
-
     public String getTitle() {
         return title;
     }
-
     public void setTitle(String title) {
         this.title = title;
+    }
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getDirector() {
@@ -79,36 +91,49 @@ public class Film {
         this.director = director;
     }
 
-    public String getThoughts() {
-        return thoughts;
+    public String getActors() {
+        return actors;
     }
 
-    public void setThoughts(String thoughts) {
-        this.thoughts = thoughts;
+    public void setActors(String actors) {
+        this.actors = actors;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
     }
 
     public Date getCreatedAt() {
         return createdAt;
     }
-
     public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
-
     public Date getUpdatedAt() {
         return updatedAt;
     }
-
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
     }
 
-    public User getCreator() {
-        return creator;
+    public List<Comment> getComment() {
+        return comment;
     }
 
-    public void setCreator(User creator) {
-        this.creator = creator;
+    public void setComment(List<Comment> comments) {
+        this.comment = comment;
+    }
+
+    public User getLead() {
+        return lead;
+    }
+
+    public void setLead(User lead) {
+        this.lead = lead;
     }
 
     public List<User> getUsers() {
@@ -119,26 +144,5 @@ public class Film {
         this.users = users;
     }
 
-    public Film(Long id, String title, String director, String thoughts, Date createdAt, Date updatedAt, User creator, List<User> users) {
-        this.id = id;
-        this.title = title;
-        this.director = director;
-        this.thoughts = thoughts;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.creator = creator;
-        this.users = users;
-    }
-    public String getCreatedAtFormated(){
-        String pattern = "MMM dd , yyyy @ HH:mm";
-        SimpleDateFormat simpleDateFormat =new SimpleDateFormat(pattern);
-        return simpleDateFormat.format(createdAt);
-    }
-    public String getUpdatedAtFormated(){
-        if(updatedAt == null)
-            return "--";
-        String pattern = "MMM dd , yyyy @ HH:mm";
-        SimpleDateFormat simpleDateFormat =new SimpleDateFormat(pattern);
-        return simpleDateFormat.format(updatedAt);
-    }
+
 }

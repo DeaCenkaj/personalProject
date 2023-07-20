@@ -1,57 +1,92 @@
 package com.dea.codingdojo.filmclub.services;
 
-import com.dea.codingdojo.filmclub.models.Film;
+import com.dea.codingdojo.filmclub.models.LoginUser;
 import com.dea.codingdojo.filmclub.models.User;
-import com.dea.codingdojo.filmclub.repositories.RoleRepository;
-import com.dea.codingdojo.filmclub.repositories.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import com.dea.codingdojo.filmclub.repositories.UserRepo;
+import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
 
 import java.util.List;
 import java.util.Optional;
 
+
 @Service
 public class UserService {
 
-    private UserRepository userRepo;
-    private RoleRepository roleRepo;
-    private BCryptPasswordEncoder bCryptPwEncoder;
+    @Autowired
+    UserRepo userRepo;
 
-    public UserService(UserRepository userRepo, RoleRepository roleRepo, BCryptPasswordEncoder bCryptPwEncoder) {
-        this.userRepo = userRepo;
-        this.roleRepo = roleRepo;
-        this.bCryptPwEncoder = bCryptPwEncoder;
+    public User register(User newUser, BindingResult result) {
+
+        Optional<User> potentialUser = userRepo.findByEmail(newUser.getEmail());
+
+        // Reject if email is taken (present in database)
+        if(potentialUser.isPresent()) {
+            result.rejectValue("email", "Matches", "An account with that email already exists!");
+        }
+
+        // Reject if password doesn't match confirmation
+        if(!newUser.getPassword().equals(newUser.getConfirm())) {
+            result.rejectValue("confirm", "Matches", "The Confirm Password must match Password!");
+        }
+
+        // Return null if result has errors
+        if(result.hasErrors()) {
+            return null;
+        }
+
+        // Hash and set password, save user to database
+        String hashed = BCrypt.hashpw(newUser.getPassword(), BCrypt.gensalt());
+        newUser.setPassword(hashed);
+        return userRepo.save(newUser);
+
     }
 
-    public void newUser(User user, String role) {
-        user.setPassword(bCryptPwEncoder.encode(user.getPassword()));
-        user.setRoles(roleRepo.findByName(role));
-        userRepo.save(user);
-    }
+    public User login(LoginUser newLogin, BindingResult result) {
 
+        Optional<User> potentialUser = userRepo.findByEmail(newLogin.getEmail());
 
-    public User findByEmail(String email) {
-        return userRepo.findByEmail(email);
-    }
-    public User findByUsername(String email) {
-        return userRepo.findByUsername(email);
+        // Find user in the DB by email
+        // Reject if NOT present
+        if(!potentialUser.isPresent()) {
+            result.rejectValue("email", "Matches", "User not found!");
+            return null;
+        }
+
+        // User exists, retrieve user from DB
+        User user = potentialUser.get();
+
+        // Reject if BCrypt password match fails
+        if(!BCrypt.checkpw(newLogin.getPassword(), user.getPassword())) {
+            result.rejectValue("password", "Matches", "Invalid Password!");
+        }
+
+        // Return null if result has errors
+        if(result.hasErrors()) {
+            return null;
+        }
+
+        // Otherwise, return the user object
+        return user;
+
     }
 
     public List<User> allUsers(){
         return userRepo.findAll();
     }
 
-
+    public User updateUser(User user) {
+        return userRepo.save(user);
+    }
 
     public User findById(Long id) {
-        Optional<User> potentialUser = userRepo.findById(id);
-        if(potentialUser.isPresent()) {
-            return potentialUser.get();
+        Optional<User> optionalUser = userRepo.findById(id);
+        if(optionalUser.isPresent()) {
+            return optionalUser.get();
+        }else {
+            return null;
         }
-        return null;
     }
-    public List<User> getAllByFavorites(Film film){
-        return userRepo.findAllByfavoriteFilm(film);
-    }
-
 }

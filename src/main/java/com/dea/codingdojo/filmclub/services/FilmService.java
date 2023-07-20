@@ -1,42 +1,54 @@
 package com.dea.codingdojo.filmclub.services;
 
 import com.dea.codingdojo.filmclub.models.Film;
-import com.dea.codingdojo.filmclub.repositories.FilmRepository;
 import com.dea.codingdojo.filmclub.models.User;
+import com.dea.codingdojo.filmclub.repositories.FilmRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+
+
+
 @Service
 public class FilmService {
- @Autowired
-  FilmRepository filmRepository;
-  public List<Film> allFilms(){return filmRepository.findAll();}
-   public  Film createFilm(Film film){return filmRepository.save(film);}
-    public Film findFilm(Long id) {
-        return filmRepository.findById(id).orElse(null);
+    @Autowired
+    private FilmRepo filmRepo;
+
+
+
+    public List<Film> allFilms(){
+        return filmRepo.findAll();
     }
 
-    public void deleteFilm(Long id){
-        filmRepository.deleteById(id);
+    public Film updateFilm(Film film) {
+        return filmRepo.save(film);
     }
 
-    public Film update(Film film, Film oldFilm){
-        List<User> userList =oldFilm.getUsers();
-        film.setUsers(userList);
-
-        return filmRepository.save(film);
+    public List<Film> getWatchedFilms(User user){
+        return filmRepo.findAllByUsers(user);
     }
 
-
-    public void addToFavorites(Film film, User user){
-        film.getUsers().add(user);
-        filmRepository.save(film);
+    public List<Film> getUnwatchedFilms(User user){
+        return filmRepo.findByUsersNotContains(user);
     }
 
-    public void removeFromFavorite(Film film, User user){
-        film.getUsers().remove(user);
-        filmRepository.save(film);
+    public Film addFilm(Film film) {
+        return filmRepo.save(film);
+    }
+
+    public void deleteFilm(Film film) {
+        filmRepo.delete(film);
+    }
+
+    public Film findById(Long id) {
+        Optional<Film> optionalFilm = filmRepo.findById(id);
+        if(optionalFilm.isPresent()) {
+            return optionalFilm.get();
+        }else {
+            return null;
+        }
     }
 
 }

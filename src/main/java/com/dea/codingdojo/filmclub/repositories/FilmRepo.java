@@ -7,13 +7,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+
 @Repository
-public interface UserRepository extends CrudRepository<User, Long> {
-    User findByUsername(String username);
-    User findByEmail(String email);
-
-    List<User> findAll();
-
-
-    List<User> findAllByfavoriteFilm(Film film);
-    }
+public interface FilmRepo extends CrudRepository<Film, Long> {
+    List<Film> findAll();
+    Film findByIdIs(Long id);
+    List<Film> findAllByUsers(User user);
+    List<Film> findByUsersNotContains(User user);
+}
